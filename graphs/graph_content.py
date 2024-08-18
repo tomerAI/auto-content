@@ -1,53 +1,98 @@
 from langgraph.graph import StateGraph, START, END
-from teams.team_content import TeamContent  # Assuming this is the new team you created
+from teams.team_content import TeamContent, ContentTeamState
 from langchain_core.messages import HumanMessage
+import functools
+from typing import List
 
 class ContentChain:
     def __init__(self):
-        # Create an instance of ContentCreationAgents (TeamContentCreation)
-        self.agents = TeamContent(llm_model="gpt-4-1106-preview")  # Using GPT-4 for this chain
-        self.content_graph = StateGraph(self.agents.ContentTeamState)  # Initialize the StateGraph for content creation
+        # Create an instance of ContentCreationAgents (TeamContent)
+        self.agents = TeamContent(llm_model="gpt-4-1106-preview")
+        self.content_graph = StateGraph(ContentTeamState)
 
-    def build_graph(self,
-                    system_prompt: str = "Supervising the content creation workflow",
-                    members: list = ["DescriptionGenerator", "HashtagsGenerator", "MetadataGenerator", "SQLSaver"]):
+        # Dictionary to store outputs from agents
+        self.content_state = {}
+        self.post_counter = 1  # Counter to number the posts
+
+    def build_graph(self, system_prompt, members):
         """Build the content graph by adding nodes and edges."""
-        # Add nodes using agent methods for content creation
-        self.content_graph.add_node("DescriptionGenerator", self.agents.agent_description_generator())
-        self.content_graph.add_node("HashtagsGenerator", self.agents.agent_hashtags_generator())
+
+        def dict_generator_callback(state):
+            messages = state["messages"]
+
+            # Extract the outputs from the agents
+            post_output = next((msg.content for msg in messages if msg.name == "PostGenerator"), "")
+            keywords_output = next((msg.content for msg in messages if msg.name == "KeywordGenerator"), "")
+            description_output = next((msg.content for msg in messages if msg.name == "DescriptionGenerator"), "")
+            
+            # Ensure the dictionary entry exists before accessing it
+            self.initialize_post_entry()
+
+            post_key = f"post_{self.post_counter}"
+
+            # Add the outputs to the appropriate fields
+            self.content_state[post_key]["Post"] = post_output
+            self.content_state[post_key]["Keywords"] = keywords_output.split(",")  # Assuming comma-separated keywords
+            self.content_state[post_key]["Description"] = description_output
+
+            # Increment the post counter for the next post
+            self.post_counter += 1
+
+            print(f"Post {post_key} updated in content_state.")
+            return state
+
+        # Create the supervisor agent
+        supervisor_agent = self.agents.agent_supervisor(system_prompt, members)
+
+        # Add the agents to the graph
         self.content_graph.add_node("PostGenerator", self.agents.agent_post_generator())
-        self.content_graph.add_node("supervisor", self.agents.agent_supervisor(system_prompt, members))
+        self.content_graph.add_node("KeywordGenerator", self.agents.agent_keyword_generator())
+        self.content_graph.add_node("DescriptionGenerator", self.agents.agent_description_generator())
 
-        # Add edges between nodes to define workflow
-        self.content_graph.add_edge("DescriptionGenerator", "supervisor")
-        self.content_graph.add_edge("HashtagsGenerator", "supervisor")
-        self.content_graph.add_edge("PostGenerator", "supervisor")
-
-        # Add conditional edges for dynamic routing based on the supervisor's decision
-        self.content_graph.add_conditional_edges(
-            "supervisor",
-            lambda x: x["next"],
-            {
-                "DescriptionGenerator": "DescriptionGenerator",
-                "HashtagsGenerator": "HashtagsGenerator",
-                "PostGenerator": "PostGenerator",
-                "FINISH": END,
-            },
+        # Add the DictGenerator agent with a callback
+        self.content_graph.add_node(
+            "DictGenerator",
+            functools.partial(self.agents.agent_dict_generator(), callback=dict_generator_callback)
         )
 
-        # Set the starting point of the graph
-        self.content_graph.add_edge(START, "supervisor")
+        # Add the supervisor agent (without a callback here)
+        self.content_graph.add_node("supervisor", supervisor_agent)
+
+        # Set the edges for each news item in the correct sequence
+        self.content_graph.add_edge(START, "KeywordGenerator")
+        self.content_graph.add_edge("KeywordGenerator", "PostGenerator")
+        self.content_graph.add_edge("PostGenerator", "DescriptionGenerator")
+        self.content_graph.add_edge("DescriptionGenerator", "DictGenerator")
+        self.content_graph.add_edge("DictGenerator", "supervisor")
+        self.content_graph.add_edge("supervisor", END)
+
 
     def compile_chain(self):
         """Compile the content creation chain from the constructed graph."""
         return self.content_graph.compile()
 
-    def enter_chain(self, message: str, chain):
-        """Enter the compiled chain with the given message."""
-        # Create a list of HumanMessage instances
-        results = [HumanMessage(content=message)]
+    def initialize_post_entry(self):
+        """Initialize the post entry in the content_state."""
+        post_key = f"post_{self.post_counter}"
+        if post_key not in self.content_state:
+            self.content_state[post_key] = {
+                "Description": "",
+                "Keywords": [],
+                "Post": ""
+            }
 
-        # Execute the chain by passing the messages to it
-        content_chain = chain.invoke({"messages": results})
+    def enter_chain(self, messages: List[str], chain):
+        """Enter the compiled chain with the given list of messages (one for each news item)."""
+        for message in messages:
+            # Initialize the post entry before starting the chain execution
+            self.initialize_post_entry()
 
-        return content_chain
+            # Create a list of HumanMessage instances
+            results = [HumanMessage(content=message)]
+
+            # Execute the chain by passing the messages to it
+            content_chain = chain.invoke({"messages": results})
+
+        # Return the final populated content dictionary
+        return self.content_state
+

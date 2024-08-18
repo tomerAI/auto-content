@@ -38,7 +38,7 @@ class HelperUtilities:
         executor = AgentExecutor(agent=agent, tools=tools)
         return executor
 
-    def agent_node(self, state, agent: AgentExecutor, name: str) -> dict:
+    def agent_node(self, state, agent: AgentExecutor, name: str, callback=None) -> dict:
         """
         Invoke the agent with the current state and return the result as a message.
         
@@ -46,12 +46,19 @@ class HelperUtilities:
             state: The current state that the agent should use to make a decision.
             agent: The agent executor that will be invoked.
             name: The name of the agent for tracking purposes.
+            callback: Optional callback function to handle the result after invocation.
 
         Returns:
             dict: A dictionary containing the result as a message.
         """
         result = agent.invoke(state)
+        
+        # If a callback is provided, execute it
+        if callback:
+            callback(state)
+        
         return {"messages": [HumanMessage(content=result["output"], name=name)]}
+
 
     def create_team_supervisor(self, llm: ChatOpenAI, system_prompt: str, members: list) -> JsonOutputFunctionsParser:
         """
