@@ -17,66 +17,78 @@ os.environ['USER_AGENT'] = 'myagent'
 os.environ["LANGCHAIN_TRACING_V2"] = "true"
 os.environ["LANGCHAIN_PROJECT"] = "Hierarchical Football Content Team"
 
-# Import chains
+# Import the classes and functions from the graphs and prompts modules
 from graphs.graph_research import ResearchChain
-from graphs.graph_content import ContentChain  # Updated to use ContentChain
+from graphs.graph_content import ContentChain
+from prompts.prompt_content import content_sys
+from prompts.prompt_research import research_sys
 
-def main():
-    """
+from datetime import datetime, timedelta
+
+# Function to determine the initial query
+def determine_initial_query():
+    # Logic to determine the query
+    # This could be based on user input, another function, or a preset query
+
+    # Create variable for yesterday's date
+    yesterday = datetime.now() - timedelta(days=1)
+    # Format the date to 'yyyy-mm-dd'
+    yesterday_str = yesterday.strftime('%Y-%m-%d')
+
+    query = f"Research yesterday's, {yesterday_str}, football news on the Danish Superliga."
+    return query, yesterday_str
+
+# Function to run the research process
+def run_research_chain(query):
     # Create an instance of the ResearchChain class
     research_chain = ResearchChain()
 
-    # Build the research chain graph
-    research_chain.build_graph()
+    # Build the research graph
+    system_prompt = research_sys
+    members = ["Search", "WebScraper", "ListGenerator"]
+    research_chain.build_graph(system_prompt, members)
 
     # Compile the research chain
-    research_chain_compiled = research_chain.compile_chain()
-
-    # Example message that would be passed into the research chain for processing
-    research_message = "Please generate content about the latest football statistics in the Danish Superliga."
+    compiled_chain = research_chain.compile_chain()
 
     # Execute the research chain with the provided message
-    research_result = research_chain.enter_chain(research_message, research_chain_compiled)
+    research_result = research_chain.enter_chain(query, compiled_chain)
 
-    # Output the result of the research chain's execution
-    print("Research chain result:", research_result)
+    print("Extracted ListGenerator Content:", research_result)
+    
+    # Return the result to be used in the content process
+    return research_result
 
-    # Extract the research result's content
-    research_content = research_result['messages'][1:].content"""
-
-    news_items = [
-        "Kasper Hjulmand resigns as Denmark's manager after Euro 2024 exit.",
-        "F.C. København wins their 15th Danish Superliga title.",
-        "Christian Eriksen returns to Denmark's squad for World Cup qualifiers after recovering from his cardiac arrest."
-    ]
-
+# Function to run the content process
+def run_content_chain(list_news):
     # Create an instance of the ContentChain class
     content_chain = ContentChain()
 
-    # Step 2: Build the graph
-    system_prompt = """
-    You are supervising a content creation workflow. Your role is to oversee and guide the coordination of three specialized agents, ensuring that the tasks are routed efficiently based on their expertise.
-
-    1. **DescriptionGenerator**: This agent is responsible for crafting engaging, concise descriptions that are tailored to TikTok. It uses SEO metadata to enhance visibility and maximize audience engagement, focusing on retention and interaction.
-
-    2. **KeywordGenerator**: This agent is an SEO expert. Its job is to generate relevant keywords and hashtags based on the content and trends. It optimizes posts for discoverability, ensuring the content reaches the right audience.
-
-    3. **PostGenerator**: This agent creates TikTok posts based on provided research material. It focuses on generating engaging, trend-aligned posts that captivate the audience and encourage engagement. The posts are optimized for social media platforms, particularly TikTok.
-
-    Your task is to route work between these agents based on the content creation flow, ensuring that each agent is tasked with their respective specialty at the appropriate time. Once their work is completed, you will determine the next step or finalize the workflow. 
-    """
+    # Build the content generation graph
+    system_prompt = content_sys
     members = ["DescriptionGenerator", "KeywordGenerator", "PostGenerator"]
     content_chain.build_graph(system_prompt, members)
 
-    # Step 3: Compile the content creation chain
+    # Compile the content creation chain
     compiled_chain = content_chain.compile_chain()
 
-    # Step 5: Enter the chain with the initial message and execute it
-    final_post_data = content_chain.enter_chain(news_items, compiled_chain)
+    # Execute the content chain with the list generator content
+    final_post_data = content_chain.enter_chain(list_news, compiled_chain)
 
-    # Step 6: Print the final post data (containing post, description, and hashtags)
+    # Print the final post data (containing post, description, and hashtags)
     print("Final post data:", final_post_data)
+    
+    return final_post_data
 
+def main():
+    # Step 1: Determine the initial query
+    query = determine_initial_query()
+
+    # Step 2: Run the research chain using the determined query
+    list_generator_content = run_research_chain(query)
+
+    # Step 3: Run the content chain using the result from the research chain
+    run_content_chain(list_generator_content)
 
 if __name__ == "__main__":
     main()
