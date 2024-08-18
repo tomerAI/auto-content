@@ -35,7 +35,7 @@ def determine_initial_query():
     # Format the date to 'yyyy-mm-dd'
     yesterday_str = yesterday.strftime('%Y-%m-%d')
 
-    query = f"Research yesterday's, {yesterday_str}, football news on the Danish Superliga."
+    query = f"Fodboldnyheder fra {yesterday_str}"
     return query, yesterday_str
 
 # Function to run the research process
