@@ -44,12 +44,12 @@ def main():
     # Extract the research result's content
     research_content = research_result['messages'][1:].content"""
 
-    research_content = """
-    Kasper Hjulmand Resigns as Denmark Manager:
-    After Denmark's disappointing Euro 2024 campaign, in which the team failed to progress past the round of 16, Kasper Hjulmand has stepped down as the national team manager. Despite high expectations, Denmark's inability to deliver results led to this decision​ (Sports Mole)​ (Sports Mole).
-    F.C. Copenhagen has once again secured the Danish Superliga title after a hard-fought season. With key performances from players like Viktor Claesson and Mohamed Daramy, Copenhagen edged out FC Midtjylland in the final weeks of the season to claim the crown. This victory marks their 15th league title in the club's history.
-    After a remarkable recovery from his cardiac arrest at Euro 2020, Christian Eriksen has been called back into the Denmark national team for the upcoming World Cup qualifiers. Eriksen’s return is seen as a major boost for Denmark as they prepare to secure their place in the 2026 FIFA World Cup.
-    """
+    news_items = [
+        "Kasper Hjulmand resigns as Denmark's manager after Euro 2024 exit.",
+        "F.C. København wins their 15th Danish Superliga title.",
+        "Christian Eriksen returns to Denmark's squad for World Cup qualifiers after recovering from his cardiac arrest."
+    ]
+
     # Create an instance of the ContentChain class
     content_chain = ContentChain()
 
@@ -72,7 +72,7 @@ def main():
     compiled_chain = content_chain.compile_chain()
 
     # Step 5: Enter the chain with the initial message and execute it
-    final_post_data = content_chain.enter_chain(research_content, compiled_chain)
+    final_post_data = content_chain.enter_chain(news_items, compiled_chain)
 
     # Step 6: Print the final post data (containing post, description, and hashtags)
     print("Final post data:", final_post_data)

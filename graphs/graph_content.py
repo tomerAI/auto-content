@@ -2,6 +2,7 @@ from langgraph.graph import StateGraph, START, END
 from teams.team_content import TeamContent, ContentTeamState
 from langchain_core.messages import HumanMessage
 import functools
+from typing import List
 
 class ContentChain:
     def __init__(self):
@@ -17,7 +18,6 @@ class ContentChain:
         """Build the content graph by adding nodes and edges."""
 
         def dict_generator_callback(state):
-            print("DICT GENERATOR CALLBACK")
             messages = state["messages"]
 
             # Extract the outputs from the agents
@@ -39,7 +39,6 @@ class ContentChain:
             self.post_counter += 1
 
             print(f"Post {post_key} updated in content_state.")
-            print("DICT GENERATOR CALLBACK END")
             return state
 
         # Create the supervisor agent
@@ -59,13 +58,14 @@ class ContentChain:
         # Add the supervisor agent (without a callback here)
         self.content_graph.add_node("supervisor", supervisor_agent)
 
-        # Set the edges in the correct sequence
+        # Set the edges for each news item in the correct sequence
         self.content_graph.add_edge(START, "KeywordGenerator")
         self.content_graph.add_edge("KeywordGenerator", "PostGenerator")
         self.content_graph.add_edge("PostGenerator", "DescriptionGenerator")
         self.content_graph.add_edge("DescriptionGenerator", "DictGenerator")
         self.content_graph.add_edge("DictGenerator", "supervisor")
         self.content_graph.add_edge("supervisor", END)
+
 
     def compile_chain(self):
         """Compile the content creation chain from the constructed graph."""
@@ -81,16 +81,18 @@ class ContentChain:
                 "Post": ""
             }
 
-    def enter_chain(self, message: str, chain):
-        """Enter the compiled chain with the given message."""
-        # Initialize the post entry before starting the chain execution
-        self.initialize_post_entry()
+    def enter_chain(self, messages: List[str], chain):
+        """Enter the compiled chain with the given list of messages (one for each news item)."""
+        for message in messages:
+            # Initialize the post entry before starting the chain execution
+            self.initialize_post_entry()
 
-        # Create a list of HumanMessage instances
-        results = [HumanMessage(content=message)]
+            # Create a list of HumanMessage instances
+            results = [HumanMessage(content=message)]
 
-        # Execute the chain by passing the messages to it
-        content_chain = chain.invoke({"messages": results})
+            # Execute the chain by passing the messages to it
+            content_chain = chain.invoke({"messages": results})
 
         # Return the final populated content dictionary
         return self.content_state
+

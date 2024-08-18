@@ -70,7 +70,7 @@ class TeamContent:
             self.llm,
             [self.tools.placeholder_tool],  
             """
-            You are a post generator for TikTok football content.
+            You are a generator text for TikTok football content that will be transformed to audio using TTS.
 
             Your task is to create concise and engaging core post text that will be transformed into audio using text-to-speech (TTS) technology. The content should be captivating, easily digestible, and perfectly suited for the TikTok audience.
 
