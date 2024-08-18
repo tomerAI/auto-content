@@ -38,7 +38,6 @@ class ContentChain:
             # Increment the post counter for the next post
             self.post_counter += 1
 
-            print(f"Post {post_key} updated in content_state.")
             return state
 
         # Create the supervisor agent
