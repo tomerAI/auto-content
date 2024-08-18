@@ -22,7 +22,7 @@ from graphs.graph_research import ResearchChain
 from graphs.graph_content import ContentChain  # Updated to use ContentChain
 
 def main():
-    
+    """
     # Create an instance of the ResearchChain class
     research_chain = ResearchChain()
 
@@ -42,25 +42,41 @@ def main():
     print("Research chain result:", research_result)
 
     # Extract the research result's content
-    research_content = research_result['messages'][1:].content
+    research_content = research_result['messages'][1:].content"""
 
+    research_content = """
+    Kasper Hjulmand Resigns as Denmark Manager:
+    After Denmark's disappointing Euro 2024 campaign, in which the team failed to progress past the round of 16, Kasper Hjulmand has stepped down as the national team manager. Despite high expectations, Denmark's inability to deliver results led to this decision​ (Sports Mole)​ (Sports Mole).
+    F.C. Copenhagen has once again secured the Danish Superliga title after a hard-fought season. With key performances from players like Viktor Claesson and Mohamed Daramy, Copenhagen edged out FC Midtjylland in the final weeks of the season to claim the crown. This victory marks their 15th league title in the club's history.
+    After a remarkable recovery from his cardiac arrest at Euro 2020, Christian Eriksen has been called back into the Denmark national team for the upcoming World Cup qualifiers. Eriksen’s return is seen as a major boost for Denmark as they prepare to secure their place in the 2026 FIFA World Cup.
+    """
     # Create an instance of the ContentChain class
     content_chain = ContentChain()
 
-    # Build the content chain graph
-    content_chain.build_graph()
+    # Step 2: Build the graph
+    system_prompt = """
+    You are supervising a content creation workflow. Your role is to oversee and guide the coordination of three specialized agents, ensuring that the tasks are routed efficiently based on their expertise.
 
-    # Compile the content chain
-    content_chain_compiled = content_chain.compile_chain()
+    1. **DescriptionGenerator**: This agent is responsible for crafting engaging, concise descriptions that are tailored to TikTok. It uses SEO metadata to enhance visibility and maximize audience engagement, focusing on retention and interaction.
 
-    # Pass the research result to the content chain
-    content_message = f"Create a TikTok description, hashtags, and metadata for the following content: {research_content}"
+    2. **KeywordGenerator**: This agent is an SEO expert. Its job is to generate relevant keywords and hashtags based on the content and trends. It optimizes posts for discoverability, ensuring the content reaches the right audience.
 
-    # Execute the content chain with the provided message
-    content_result = content_chain.enter_chain(content_message, content_chain_compiled)
+    3. **PostGenerator**: This agent creates TikTok posts based on provided research material. It focuses on generating engaging, trend-aligned posts that captivate the audience and encourage engagement. The posts are optimized for social media platforms, particularly TikTok.
 
-    # Output the result of the content chain's execution
-    print("Content chain result:", content_result)
+    Your task is to route work between these agents based on the content creation flow, ensuring that each agent is tasked with their respective specialty at the appropriate time. Once their work is completed, you will determine the next step or finalize the workflow. 
+    """
+    members = ["DescriptionGenerator", "KeywordGenerator", "PostGenerator"]
+    content_chain.build_graph(system_prompt, members)
+
+    # Step 3: Compile the content creation chain
+    compiled_chain = content_chain.compile_chain()
+
+    # Step 5: Enter the chain with the initial message and execute it
+    final_post_data = content_chain.enter_chain(research_content, compiled_chain)
+
+    # Step 6: Print the final post data (containing post, description, and hashtags)
+    print("Final post data:", final_post_data)
+
 
 if __name__ == "__main__":
     main()
