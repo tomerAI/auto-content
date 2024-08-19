@@ -60,7 +60,10 @@ def determine_initial_query():
     return query, yesterday_str
 
 def run_scraper(api_key, news_collection):
-    football_teams = ["Arsenal", "Manchester United", "Manchester City", "Liverpool"]
+    """football_teams = ["Arsenal", "Manchester United", "Manchester City", "Liverpool",
+                      "Chelsea", "Tottenham Hotspur", "Real Madrid", "Barcelona",
+                      "Paris Saint-Germain", "Bayern Munich"]"""
+    football_teams = ["Arsenal", "Manchester United"] # test
     scraper_system = FootballNewsScraper(api_key, news_collection)
     scraper_system.run(football_teams)
 

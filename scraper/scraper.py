@@ -25,8 +25,7 @@ class ScraperModule:
         self.api_key = api_key
         self.news_collection = news_collection
         # Define football-related keywords
-        self.football_keywords = ['football', 'soccer', 'goal', 'match', 'championship', 'league', 'Arsenal', 
-                                  'Manchester United', 'Liverpool', 'Premier League', 'World Cup']
+        self.football_keywords = ['football', 'soccer', 'goal', 'match', 'championship', 'league']
 
     def is_football_related(self, article_content):
         """Check if the article content contains football-related keywords."""
