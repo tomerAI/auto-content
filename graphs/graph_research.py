@@ -15,59 +15,44 @@ class ResearchChain:
     def build_graph(self, system_prompt, members):
         """Build the research graph by adding nodes and edges."""
 
-        def list_generator_callback(state):
-            messages = state["messages"]
-
-            # Extract content from all previous messages (Search, WebScraper, etc.)
-            aggregated_content = []
-            for msg in messages:
-                if msg.name in ["Search", "WebScraper"]:
-                    aggregated_content.append(msg.content)
-            
-            # Concatenate the aggregated content into a single news item
-            news_item = "\n".join(aggregated_content)
-
-            # Add the aggregated news item to the news list
-            self.news_list.append(news_item)
-
-            return state
-
         # Add nodes using agent methods
-        self.research_graph.add_node("Search", self.agents.agent_search())
-        self.research_graph.add_node("WebScraper", self.agents.agent_research())
-        self.research_graph.add_node(
-            "ListGenerator", 
-            functools.partial(self.agents.agent_list_generator(), callback=list_generator_callback)
-        )
+        self.research_graph.add_node("AgentScrape", self.agents.agent_research())
+        self.research_graph.add_node("AgentList", self.agents.agent_list())
         self.research_graph.add_node("supervisor", self.agents.agent_supervisor(system_prompt, members))
-
-        # Add edges between nodes
-        self.research_graph.add_edge("Search", "supervisor")
-        self.research_graph.add_edge("WebScraper", "supervisor")
-        self.research_graph.add_edge("ListGenerator", "supervisor")
 
         # Add conditional edges for dynamic routing
         self.research_graph.add_conditional_edges(
             "supervisor",
             lambda x: x["next"],
-            {"Search": "Search", "WebScraper": "WebScraper", "ListGenerator": "ListGenerator", "FINISH": END},
+            {"AgentScrape": "AgentScrape", 
+             "AgentList": "AgentList", 
+             "FINISH": END},
         )
 
-        # Set the starting point of the graph
+        # Manual graph construction
         self.research_graph.add_edge(START, "supervisor")
-        self.research_graph.add_edge("ListGenerator", END)
+        self.research_graph.add_edge("supervisor", "AgentScrape")
+        self.research_graph.add_edge("AgentScrape", "AgentList")
+        self.research_graph.add_edge("AgentList", END)
 
     def compile_chain(self):
         """Compile the research chain from the constructed graph."""
         return self.research_graph.compile()
 
     def enter_chain(self, message: str, chain):
-        """Enter the compiled chain with the given message."""
+        """Enter the compiled chain with the given message and return the last message from the chain."""
         # Create a list of HumanMessage instances
         results = [HumanMessage(content=message)]
 
         # Execute the chain by passing the messages to it
         research_chain = chain.invoke({"messages": results})
 
-        # Return the final populated news list
-        return self.news_list
+        # Assuming the chain returns a list of messages, get the last message
+        if "messages" in research_chain and research_chain["messages"]:
+            last_message = research_chain["messages"][-1].content
+        else:
+            last_message = "No valid messages returned from the chain."
+
+        # Return the last message as the final output
+        return last_message
+

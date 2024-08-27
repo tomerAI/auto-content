@@ -26,6 +26,7 @@ openai_api_key = os.getenv("OPENAI_API_KEY")
 tavily_api_key = os.getenv("TAVILY_API_KEY")
 langchain_api_key = os.getenv("LANGCHAIN_API_KEY")
 news_api_key = os.getenv("NEWS_API_KEY")
+hf_api_key = os.getenv("HF_API_KEY")
 
 # Set the API keys 
 os.environ["OPENAI_API_KEY"] = openai_api_key
@@ -44,20 +45,11 @@ from prompts.prompt_content import content_sys
 from prompts.prompt_research import research_sys
 from scraper.scraper import FootballNewsScraper
 
-from datetime import datetime, timedelta
-
-# Function to determine the initial query
-def determine_initial_query():
-    # Logic to determine the query
-    # This could be based on user input, another function, or a preset query
-
-    # Create variable for yesterday's date
-    yesterday = datetime.now() - timedelta(days=1)
-    # Format the date to 'yyyy-mm-dd'
-    yesterday_str = yesterday.strftime('%Y-%m-%d')
-
-    query = f"Fodboldnyheder fra {yesterday_str}"
-    return query, yesterday_str
+from utilities.util_main import transform_to_list
+from run_research_output import test_output, content_output_test
+from utilities.utils_texttoimg import generate_images_from_prompts
+from utilities.util_tts import text_to_speech_conversion
+from utilities.util_video import create_videos_from_posts, postprocess_videos
 
 def run_scraper(api_key, news_collection):
     """football_teams = ["Arsenal", "Manchester United", "Manchester City", "Liverpool",
@@ -65,7 +57,8 @@ def run_scraper(api_key, news_collection):
                       "Paris Saint-Germain", "Bayern Munich"]"""
     football_teams = ["Arsenal", "Manchester United"] # test
     scraper_system = FootballNewsScraper(api_key, news_collection)
-    scraper_system.run(football_teams)
+    urls = scraper_system.run(football_teams)
+    return urls
 
 
 # Function to run the research process
@@ -75,7 +68,7 @@ def run_research_chain(query):
 
     # Build the research graph
     system_prompt = research_sys
-    members = ["Search", "WebScraper", "ListGenerator"]
+    members = ["AgentScrape", "AgentList"]
     research_chain.build_graph(system_prompt, members)
 
     # Compile the research chain
@@ -83,8 +76,6 @@ def run_research_chain(query):
 
     # Execute the research chain with the provided message
     research_result = research_chain.enter_chain(query, compiled_chain)
-
-    print("Extracted ListGenerator Content:", research_result)
     
     # Return the result to be used in the content process
     return research_result
@@ -96,7 +87,7 @@ def run_content_chain(list_news):
 
     # Build the content generation graph
     system_prompt = content_sys
-    members = ["DescriptionGenerator", "KeywordGenerator", "PostGenerator"]
+    members = ["DescriptionGenerator", "PromptGenerator", "TextGenerator"]
     content_chain.build_graph(system_prompt, members)
 
     # Compile the content creation chain
@@ -110,19 +101,49 @@ def run_content_chain(list_news):
     
     return final_post_data
 
+
 def main():
-    news_api_key = os.getenv("NEWS_API_KEY")
-    run_scraper(news_api_key, news_collection)
-    """
-    # Step 1: Determine the initial query
-    query = determine_initial_query()
+    # Step 1: Run the scraper to get the URLs
+    #news_api_key = os.getenv("NEWS_API_KEY")
+    #urls = run_scraper(news_api_key, news_collection)
+    #print("URLs:", urls)
+
+    urls = (
+        "Opposition View Q&A: De Ligt and Mazraoui transfers"
+        "Rayyan from Bavarian Football Works answers questions about United’s two newest signings"
+        "https://thebusbybabe.sbnation.com/2024/8/17/24222506/opposition-view-q-a-de-ligt-and-mazraoui-transfers"
+        ""
+        "Barcelona boss Flick hopeful Gündogan stays after talks"
+        "Barcelona boss Hansi Flick is hopeful Ilkay Gündogan will stay at the club after holding talks with the midfielder."
+        "https://www.espn.com/soccer/story/_/id/40898109/barcelona-hansi-flick-ilkay-gundogan-talks-stay-transfer-window"
+    )
 
     # Step 2: Run the research chain using the determined query
-    list_generator_content = run_research_chain(query)
+    #output = run_research_chain(urls)
+    #print("List Generator Content:", output)
+    #output = test_output
+    #output_list = transform_to_list(output)
 
     # Step 3: Run the content chain using the result from the research chain
-    run_content_chain(list_generator_content)"""
+    #run_content_chain(output_list)
+
+    # Step 4: Turn text into audio using TTS technology
+    #text_to_speech_conversion(content_output_test, key="Text", folder_name="audio")
+    
+    # Step 4: Convert the text to speech and save it to the 'audio' folder
+    # Convert the post data to speech and save it to the 'audio' folder
+    #text_to_speech_conversion(content_output_test, key="Text", folder_name="audio") 
+
+    # Step 5: Generate images from the prompts
+    #generate_images_from_prompts(content_output_test, folder_name="images", api_key=hf_api_key)
+    
+    # Example of running the function for post_1
+    create_videos_from_posts(content_output_test)
+
+    # Example usage: Post-process the videos generated earlier
+    postprocess_videos(input_folder='output', output_folder='processed_videos')
+
+
 
 if __name__ == "__main__":
     main()
-
