@@ -47,7 +47,7 @@ from scraper.scraper import FootballNewsScraper
 
 from utilities.util_main import transform_to_list
 from run_research_output import test_output, content_output_test
-from utilities.utils_texttoimg import generate_images_from_prompts
+from utilities.util_texttoimg import generate_images_from_prompts
 from utilities.util_tts import text_to_speech_conversion
 from utilities.util_video import create_videos_from_posts, postprocess_videos
 
@@ -128,7 +128,7 @@ def main():
     #run_content_chain(output_list)
 
     # Step 4: Turn text into audio using TTS technology
-    #text_to_speech_conversion(content_output_test, key="Text", folder_name="audio")
+    text_to_speech_conversion(content_output_test, key="Text", folder_name="audio")
     
     # Step 4: Convert the text to speech and save it to the 'audio' folder
     # Convert the post data to speech and save it to the 'audio' folder
@@ -138,10 +138,10 @@ def main():
     #generate_images_from_prompts(content_output_test, folder_name="images", api_key=hf_api_key)
     
     # Example of running the function for post_1
-    create_videos_from_posts(content_output_test)
+    #create_videos_from_posts(content_output_test)
 
     # Example usage: Post-process the videos generated earlier
-    postprocess_videos(input_folder='output', output_folder='processed_videos')
+    #postprocess_videos(input_folder='output', output_folder='processed_videos')
 
 
 
