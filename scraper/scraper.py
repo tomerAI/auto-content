@@ -6,6 +6,7 @@ from sklearn.cluster import KMeans
 from pymongo import MongoClient
 import logging
 import spacy
+import hashlib
 
 # MongoDB setup
 client = MongoClient('mongodb://localhost:27017/')
@@ -60,18 +61,34 @@ class ScraperModule:
             return []
         
 
+    def generate_natural_key(article):
+        """Generate a unique natural key using the title, source, and published date."""
+        unique_string = f"{article['title']}-{article['source']['name']}-{article['publishedAt']}"
+        natural_key = hashlib.sha256(unique_string.encode('utf-8')).hexdigest()
+        return natural_key
+
+
     def store_articles(self, articles):
+        """Store the articles with a unique ID and a URL attribute."""
         today = datetime.now().strftime('%Y-%m-%d')
+        
         for article in articles:
-            article['id'] = article['url']
+            # Generate a unique natural key for the article
+            #article_id = generate_natural_key(article)
+            
+            # Prepare the article data for insertion
             article_to_insert = {
-                'id': article['id'],
+                #'id': article_id,  # Natural key based on article properties
+                'url': article['url'],  # Explicitly store the URL
                 'source': article['source']['name'],
-                'content': article['content'] or article['description'] or "",
-                'datePublished': article['publishedAt'],
+                'content': article.get('content') or article.get('description') or "",
+                'datePublished': article.get('publishedAt'),
                 'dateScraped': today
             }
+            
+            # Insert the article into the MongoDB collection
             self.news_collection.insert_one(article_to_insert)
+
 
 
 class PreprocessingModule:
@@ -174,6 +191,8 @@ class FootballNewsScraper:
 
     def run(self, football_teams):
         """Main function to orchestrate the scraping, preprocessing, clustering, and processing of news articles."""
+        collected_articles_info = []  # List to store the formatted articles info
+
         for team in football_teams:
             logging.info(f"Fetching news for {team}...")
 
@@ -221,4 +240,18 @@ class FootballNewsScraper:
             # Step 7: Perform further processing/analysis on the articles
             processed_articles = self.processing.analyze_articles(representative_articles)
 
+            # Step 8: Collect formatted information (Title, Content, URL)
+            for article in processed_articles:
+                title = article.get('title', 'No Title')
+                content = article.get('content', 'No Content')
+                url = article.get('url', 'No URL')
+
+                # Format the string as per your requirement
+                formatted_article_info = f"Title: {title}\nContent: {content}\nUrl: {url}\n"
+                collected_articles_info.append(formatted_article_info)
+
             logging.info(f"Processed {len(processed_articles)} articles for {team}.")
+
+        # Join all articles into a single string separated by new lines
+        return "\n".join(collected_articles_info)
+

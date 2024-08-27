@@ -21,8 +21,8 @@ class ContentChain:
             messages = state["messages"]
 
             # Extract the outputs from the agents
-            post_output = next((msg.content for msg in messages if msg.name == "PostGenerator"), "")
-            keywords_output = next((msg.content for msg in messages if msg.name == "KeywordGenerator"), "")
+            text_output = next((msg.content for msg in messages if msg.name == "TextGenerator"), "")
+            prompts_output = next((msg.content for msg in messages if msg.name == "PromptGenerator"), "")
             description_output = next((msg.content for msg in messages if msg.name == "DescriptionGenerator"), "")
             
             # Ensure the dictionary entry exists before accessing it
@@ -31,8 +31,8 @@ class ContentChain:
             post_key = f"post_{self.post_counter}"
 
             # Add the outputs to the appropriate fields
-            self.content_state[post_key]["Post"] = post_output
-            self.content_state[post_key]["Keywords"] = keywords_output.split(",")  # Assuming comma-separated keywords
+            self.content_state[post_key]["Text"] = text_output
+            self.content_state[post_key]["Prompts"] = prompts_output.split(",")  
             self.content_state[post_key]["Description"] = description_output
 
             # Increment the post counter for the next post
@@ -44,8 +44,8 @@ class ContentChain:
         supervisor_agent = self.agents.agent_supervisor(system_prompt, members)
 
         # Add the agents to the graph
-        self.content_graph.add_node("PostGenerator", self.agents.agent_post_generator())
-        self.content_graph.add_node("KeywordGenerator", self.agents.agent_keyword_generator())
+        self.content_graph.add_node("TextGenerator", self.agents.agent_text_generator())
+        self.content_graph.add_node("PromptGenerator", self.agents.agent_prompt_generator())
         self.content_graph.add_node("DescriptionGenerator", self.agents.agent_description_generator())
 
         # Add the DictGenerator agent with a callback
@@ -58,10 +58,10 @@ class ContentChain:
         self.content_graph.add_node("supervisor", supervisor_agent)
 
         # Set the edges for each news item in the correct sequence
-        self.content_graph.add_edge(START, "KeywordGenerator")
-        self.content_graph.add_edge("KeywordGenerator", "PostGenerator")
-        self.content_graph.add_edge("PostGenerator", "DescriptionGenerator")
-        self.content_graph.add_edge("DescriptionGenerator", "DictGenerator")
+        self.content_graph.add_edge(START, "TextGenerator")
+        self.content_graph.add_edge("TextGenerator", "DescriptionGenerator")
+        self.content_graph.add_edge("DescriptionGenerator", "PromptGenerator")
+        self.content_graph.add_edge("PromptGenerator", "DictGenerator")
         self.content_graph.add_edge("DictGenerator", "supervisor")
         self.content_graph.add_edge("supervisor", END)
 
@@ -76,8 +76,8 @@ class ContentChain:
         if post_key not in self.content_state:
             self.content_state[post_key] = {
                 "Description": "",
-                "Keywords": [],
-                "Post": ""
+                "Prompt": [],
+                "Text": ""
             }
 
     def enter_chain(self, messages: List[str], chain):

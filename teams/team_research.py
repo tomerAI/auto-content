@@ -4,7 +4,8 @@ from typing import Annotated, List, TypedDict
 from langchain_core.messages import BaseMessage
 from langchain_openai.chat_models import ChatOpenAI
 from utilities.helper import HelperUtilities
-from tools.tool_scraper import ToolSearch, ToolResearch
+#from tools.tool_scraper import ToolResearch
+from tools.tool_jina import ToolResearch
 from tools.tool_empty import EmptyTool
 
 class ResearchTeamState(TypedDict):
@@ -23,25 +24,6 @@ class TeamResearch:
         self.llm = ChatOpenAI(model=llm_model)
         self.utilities = HelperUtilities()  # Create an instance of HelperUtilities
         self.empty_tool = EmptyTool()
-        self.search_tool = ToolSearch()  # Instantiate the ScraperStats class
-
-    def agent_search(self):
-        """Creates a search agent for conducting research using the Tavily search tool."""
-        # Improved system prompt with more context and instructions
-        system_prompt = (
-            "You are a highly capable research assistant specializing in retrieving up-to-date information. "
-            "Your task is to conduct thorough searches using the Tavily search engine. "
-            "Focus on obtaining detailed and credible information related to football statistics, league data, "
-            "and player performances in the Danish Superliga."
-        )
-
-        search_agent = self.utilities.create_agent(
-            self.llm,
-            [self.search_tool.tavily_tool],
-            system_prompt,
-        )
-        search_node = functools.partial(self.utilities.agent_node, agent=search_agent, name="Search")
-        return search_node
 
     def agent_research(self):
         """Creates a research agent for scraping web pages for more detailed information."""
@@ -49,7 +31,8 @@ class TeamResearch:
         system_prompt = (
             "You are a research assistant specialized in extracting detailed information from web pages. "
             "Scrape the specified URLs to gather comprehensive football statistics, player data, and match details "
-            "from the Danish Superliga. Ensure accuracy and summarize the most relevant points."
+            "from the best football teams in the world." 
+            "Ensure accuracy and summarize the most relevant points."
         )
 
         research_agent = self.utilities.create_agent(
@@ -57,15 +40,18 @@ class TeamResearch:
             [ToolResearch],
             system_prompt,
         )
-        research_node = functools.partial(self.utilities.agent_node, agent=research_agent, name="WebScraper")
+        research_node = functools.partial(self.utilities.agent_node, agent=research_agent, name="AgentScrape")
         return research_node
 
-    def agent_list_generator(self):
-        """Creates an agent that aggregates news and compiles it into a list."""
+    def agent_list(self):
+        """Creates an agent that aggregates news and compiles it into a list of news."""
         system_prompt = (
-            "You are a list generator that aggregates all the news gathered by the team. "
-            "Your task is to create a well-structured list of football-related news items based on the data "
-            "provided by the Search and WebScraper agents. Ensure that each item is concise and categorized properly."
+            "You are a list agent responsible for aggregating and separating all the football-related news gathered "
+            "by the research agent. Your task is to create a list where each item is a piece of football news"
+            "The output should be in the form of a Python list wrapped in a string"
+            "Here's an example:"
+            "['News story 1', 'News story 2', 'News story 3']"
+            "Return it as a string to the supervisor agent."
         )
 
         list_agent = self.utilities.create_agent(
@@ -73,16 +59,20 @@ class TeamResearch:
             [self.empty_tool.placeholder_tool],  # Placeholder as no tool is needed for aggregation
             system_prompt,
         )
-        list_node = functools.partial(self.utilities.agent_node, agent=list_agent, name="ListGenerator")
+        list_node = functools.partial(self.utilities.agent_node, agent=list_agent, name="AgentList")
         return list_node
+
         
     def agent_supervisor(self, system_prompt: str, members: List[str]):
         """Creates a team supervisor agent to manage the conversation between workers."""
-        # Improved system prompt for the supervisor
+        # Updated system prompt for the supervisor
         system_prompt = (
-            "You are the team supervisor responsible for coordinating the tasks between the team members. "
-            "Ensure that the Search and WebScraper agents collaborate effectively. Once their tasks are complete, "
-            "trigger the ListGenerator agent to compile the final list of football news."
+            "You are the team supervisor responsible for managing the research process. "
+            "Your task is to coordinate between the WebScraper and ListGenerator agents. "
+            "You will receive URLs, which you should assign to the WebScraper agent to gather information. "
+            "Once the WebScraper has successfully completed scraping the content from the provided URLs, "
+            "you must then trigger the ListGenerator agent to format the extracted content into a cohesive output. "
+            "After the ListGenerator finishes formatting the content, the research task is complete, and you can end the team process."
         )
 
         supervisor_agent = self.utilities.create_team_supervisor(
