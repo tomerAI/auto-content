@@ -19,15 +19,7 @@ URL -> Research -> Content -> Text-to-speech -> Text-to-image -> Video productio
    - Text agent: Generates the text that will be used as audio in the video using tts
    - Description agent: Generates the text for the post
    - Prompt agent: Creates the text-to-image prompt for image generation
-   - Dictionary agent: Uses the outputs from above to generate a dictionary with related information for each post using the following structure:
-        {
-            "post_X": {
-                "Text": "Generated post content for TTS",
-                "Description": "Generated TikTok description with hashtags",
-                "Prompt": "Generated prompts for image generation"
-                "Keywords": ["keyword1", "keyword2", "keyword3"]
-            }
-        }
+   - Dictionary agent: Uses the outputs from above to generate a dictionary with related information for each post using the following structure
 
 4. Text-to-speech (TTS)
    - Translates the text from the post's dictionary to audio using 'parler-tts/parler-tts-mini-expresso' model from huggingface
