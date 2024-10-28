@@ -13,10 +13,6 @@ client = MongoClient('mongodb://localhost:27017/')
 db = client['football_news']
 news_collection = db['articles']
 
-# Transformers setup
-tokenizer = AutoTokenizer.from_pretrained("sentence-transformers/all-MiniLM-L6-v2")
-model = AutoModel.from_pretrained("sentence-transformers/all-MiniLM-L6-v2")
-
 # Logger setup
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 

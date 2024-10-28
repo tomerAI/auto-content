@@ -118,11 +118,10 @@ def main():
     # Step 2: Run the research chain using the determined query
     output = run_research_chain(urls)
     #print("List Generator Content:", output)
-    #output = test_output
-    #output_list = transform_to_list(output)
+    output_list = transform_to_list(output)
 
     # Step 3: Run the content chain using the result from the research chain
-    output_content = run_content_chain(test_output)
+    output_content = run_content_chain(output_list)
     # Print the final post data (containing post, description, and hashtags)
     print("Final post data:", output_content)
 
