@@ -4,7 +4,7 @@ import io
 from PIL import Image
 
 # Set up the API URL
-API_URL = "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell"
+API_URL = "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-dev"
 
 def query(payload, api_key):
     """Send a POST request to Hugging Face's API and return the generated image bytes."""
