@@ -6,7 +6,13 @@ Can only be used locally by running the following command 'python main.py', whic
 ## Pipeline
 URL -> Research -> Content -> Text-to-speech -> Text-to-image -> Video production
 1. Fetches URLs for football news which are passed forward to the research chain
-   - Uses the 
+   - Scrapes for football articles using News API
+   - Scrapes news from yesterday
+   - Uses football-related keywords to exclude non-football articles
+   - Clusters news to avoid similar news stories
+   - Creates embeddings from articles' text using distilbert-base-uncased
+   - Stores article embeddings in MongoDB vector database with metadata
+
 2. Run research chain:
    - Agents: research agent, list agent, and supervisor (not used)
    - Graph flow: research agent -> list agent -> END
@@ -32,6 +38,8 @@ URL -> Research -> Content -> Text-to-speech -> Text-to-image -> Video productio
 
 
 ## Todo
+- Use LLM agent to determine if the news is about football instead of keywords
+- Use different logic than n-clusters=2 for clustering articles
 - Containerization
 - Scheduling
 - Use State to store agent outputs instead of returning the raw string and transforming to the right format
