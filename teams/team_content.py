@@ -49,25 +49,29 @@ class TeamContent:
             """
             You are a creative prompt generator specializing in crafting text-to-image prompts for TikTok content.
 
-            Your task is to generate 4-5 unique and visually engaging text-to-image prompts for the provided TikTok post. These prompts will be used to generate images that complement the TikTok post.
-            The images should have a chronological order and should visually represent the content of the post.
+            Your task is to generate 3 unique and visually engaging text-to-image prompts for the provided TikTok post. These prompts will be used to generate images that complement the TikTok post.
+            The images should have a chronological order and should visually represent the content of the post based on the sequence of events in the news story.
 
             To create effective text-to-image prompts, follow these guidelines:
             - Be specific and descriptive. Include details like colors, actions, moods, and settings to help guide the image generation.
-            - Think about the TikTok post's theme, message, and tone. Ensure that the image prompts visually represent the content and style of the post.
-            - Focus on creating prompts that are visually stimulating and align with the emotions or story the post is trying to convey.
+            - Incorporate the "blended ugly cartoon and rubber hose style" aesthetic. The characters should have exaggerated, grotesque features but with bendy, stretchy limbs reminiscent of early 20th-century rubber hose animation. Think of unsettling yet playful and fluidly dynamic characters.
+            - Focus on the grotesque yet whimsical design of the peoples' characters, vibrant and mismatched color palettes, and strange proportions, while maintaining a bouncy, energetic animation feel.
+            - Ensure that the prompts reflect the chronological order of events in the TikTok post or news story. For example, begin with an image showing an initial moment, followed by key events, leading to the conclusion.
+            - Think about the TikTok post's theme, message, and tone. Ensure that the image prompts visually represent the content and style of the post, with this unique cartoonish aesthetic.
             - Use clear language to define the scene, the objects, and the characters in the image.
             - Each prompt should be concise but detailed enough to produce a distinct and high-quality image.
 
             Example prompt format:
-            - "A football player celebrating a goal under a bright stadium with fireworks in the background, wearing a red jersey, night-time, dynamic action pose."
-            - "A group of fans cheering in a stadium with flags waving, bright sunny day, blue sky, high energy."
-
-            Output the 4-5 prompts as a comma-separated list in chronological order.
+            - "A grotesque, exaggerated football player with oversized, twisted legs, rubber hose arms flailing, awkwardly running across a muddy field under dark, stormy skies, with a crooked grin on his face."
+            - "A chaotic scene of deformed football fans with bulbous heads, cheering wildly from the stands, waving distorted flags, some characters have rubber hose-style limbs stretching out to grab snacks and drinks."
+            - "A bent and twisted football referee, with stretched arms holding a large yellow card, grotesque facial features expressing frustration, standing in the center of a bouncy, cartoonish field."
+            
+            Output the 3 prompts as a comma-separated list in chronological order.
             """,
         )
         prompt_node = functools.partial(self.utilities.agent_node, agent=prompt_agent, name="PromptGenerator")
         return prompt_node
+
 
 
     def agent_text_generator(self):
@@ -84,7 +88,7 @@ class TeamContent:
             The content should be captivating, easily digestible, and perfectly suited for the TikTok audience.
 
             Make sure your text is:
-            - Summarizes the key football event in 2-3 sentences.
+            - Summarizes the key football event in 3 sentences.
             - Is conversational and engaging to encourage interaction (likes, comments, shares).
             - Can be easily read aloud for TTS, so keep the language clear and simple.
             - Do not use emojis
@@ -100,22 +104,29 @@ class TeamContent:
 
     def agent_dict_generator(self):
         """Creates an agent that collects outputs from the other agents and populates the content_state dictionary."""
+        
+        # Define the task and ensure proper formatting
         dict_agent = self.utilities.create_agent(
             self.llm,
             [self.tools.placeholder_tool],  
             """
-            You are responsible for collecting and organizing the generated content from other agents into a structured format.
-
-            Your task is to combine the outputs of the TextGenerator, PromptGenerator, and DescriptionGenerator agents into a well-structured dictionary.
-
+            You are responsible for collecting and organizing the generated content from other agents into a well-structured dictionary.
+            
+            Follow these guidelines to ensure no formatting errors occur:
+            - Escape any apostrophes within strings properly by using backslashes (\\').
+            - Ensure prompts are preserved as a list of strings and do not break into multiple strings unnecessarily.
+            - Handle commas carefully within the strings to prevent splitting.
+            
             Format your output as follows:
-            - Description: "Generated TikTok description with hashtags"
-            - Prompts: ["Prompt1", "Prompt2", "Prompt3"]
-            - Text: "Generated text content for TTS"
+            - Description (string): "Generated TikTok description with hashtags"
+            - Prompt (list of strings): [Prompt1, Prompt2, Prompt3]
+            - Text (string): "Generated text content for TTS"
 
-            Ensure that all fields are correctly populated, and return the structured dictionary.
-            """,
+            Return the final dictionary without any formatting issues.
+            """
         )
+
+        # Define the node to handle the dictionary generation
         dict_node = functools.partial(self.utilities.agent_node, agent=dict_agent, name="DictGenerator")
         return dict_node
 

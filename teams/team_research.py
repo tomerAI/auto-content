@@ -48,6 +48,9 @@ class TeamResearch:
         system_prompt = (
             "You are a list agent responsible for aggregating and separating all the football-related news gathered "
             "by the research agent. Your task is to create a list where each item is a piece of football news"
+            "The news should be comprehensive and engaging making sure to include all the relevant details."
+            "Include all the details from AgentScrape and format them into a cohesive output for each news story."
+            "Exlucde the source of the news story."
             "The output should be in the form of a Python list wrapped in a string"
             "Here's an example:"
             "['News story 1', 'News story 2', 'News story 3']"

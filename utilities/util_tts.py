@@ -11,8 +11,8 @@ def text_to_speech_conversion(post_data, key="Text", folder_name="audio"):
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
 
     # Load the model and tokenizer
-    model = ParlerTTSForConditionalGeneration.from_pretrained("parler-tts/parler-tts-mini-expresso").to(device)
-    tokenizer = AutoTokenizer.from_pretrained("parler-tts/parler-tts-mini-expresso")
+    model = ParlerTTSForConditionalGeneration.from_pretrained("parler-tts/parler-tts-mini-v1").to(device)
+    tokenizer = AutoTokenizer.from_pretrained("parler-tts/parler-tts-mini-v1")
 
     # Set a default description for a sports commentator voice
     sports_commentator_description = (

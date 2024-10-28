@@ -47,7 +47,7 @@ from scraper.scraper import FootballNewsScraper
 
 from utilities.util_main import transform_to_list
 from run_research_output import test_output, content_output_test
-from utilities.utils_texttoimg import generate_images_from_prompts
+from utilities.util_texttoimg import generate_images_from_prompts
 from utilities.util_tts import text_to_speech_conversion
 from utilities.util_video import create_videos_from_posts, postprocess_videos
 
@@ -95,20 +95,17 @@ def run_content_chain(list_news):
 
     # Execute the content chain with the list generator content
     final_post_data = content_chain.enter_chain(list_news, compiled_chain)
-
-    # Print the final post data (containing post, description, and hashtags)
-    print("Final post data:", final_post_data)
     
     return final_post_data
 
 
 def main():
     # Step 1: Run the scraper to get the URLs
-    #news_api_key = os.getenv("NEWS_API_KEY")
-    #urls = run_scraper(news_api_key, news_collection)
+    news_api_key = os.getenv("NEWS_API_KEY")
+    urls = run_scraper(news_api_key, news_collection)
     #print("URLs:", urls)
 
-    urls = (
+    """urls = (
         "Opposition View Q&A: De Ligt and Mazraoui transfers"
         "Rayyan from Bavarian Football Works answers questions about United’s two newest signings"
         "https://thebusbybabe.sbnation.com/2024/8/17/24222506/opposition-view-q-a-de-ligt-and-mazraoui-transfers"
@@ -116,27 +113,25 @@ def main():
         "Barcelona boss Flick hopeful Gündogan stays after talks"
         "Barcelona boss Hansi Flick is hopeful Ilkay Gündogan will stay at the club after holding talks with the midfielder."
         "https://www.espn.com/soccer/story/_/id/40898109/barcelona-hansi-flick-ilkay-gundogan-talks-stay-transfer-window"
-    )
+    )"""
 
     # Step 2: Run the research chain using the determined query
-    #output = run_research_chain(urls)
+    output = run_research_chain(urls)
     #print("List Generator Content:", output)
-    #output = test_output
-    #output_list = transform_to_list(output)
+    output_list = transform_to_list(output)
 
     # Step 3: Run the content chain using the result from the research chain
-    #run_content_chain(output_list)
+    output_content = run_content_chain(output_list)
+    # Print the final post data (containing post, description, and hashtags)
+    print("Final post data:", output_content)
 
     # Step 4: Turn text into audio using TTS technology
-    #text_to_speech_conversion(content_output_test, key="Text", folder_name="audio")
+    text_to_speech_conversion(content_output_test, key="Text", folder_name="audio")
     
-    # Step 4: Convert the text to speech and save it to the 'audio' folder
-    # Convert the post data to speech and save it to the 'audio' folder
-    #text_to_speech_conversion(content_output_test, key="Text", folder_name="audio") 
-
     # Step 5: Generate images from the prompts
-    #generate_images_from_prompts(content_output_test, folder_name="images", api_key=hf_api_key)
+    generate_images_from_prompts(content_output_test, folder_name="images", api_key=hf_api_key)
     
+    # Step 6: Create videos from the posts
     # Example of running the function for post_1
     create_videos_from_posts(content_output_test)
 
